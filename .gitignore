@@ -3,3 +3,10 @@
 data/*
 !.vscode/extensions.json
 __pycache__/*
+
+# ignorer tout (meme le dossier uploads/)
+uploads/*
+
+# exception à la règle (pour permettre le dossier uploads/)
+uploads/.gitkeep
+
