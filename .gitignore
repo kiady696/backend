@@ -3,3 +3,6 @@
 data/*
 !.vscode/extensions.json
 __pycache__/*
+
+
+uploads/*
