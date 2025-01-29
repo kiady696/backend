@@ -53,11 +53,12 @@ def train_model():
         y_pred = model.predict(X)
         accuracy = accuracy_score(y, y_pred)"""
     model_choice = "xgboost"  
-    idFile = "TEST"
+    #idFile = "TEST"
+    idFile = request.json['file/name']
     yColumn = "variety"
     print(model_choice,idFile,yColumn)
 
-    df = pd.read_csv(f"./uploads/{idFile}.csv")
+    df = pd.read_csv(f"./uploads/{idFile}")
     print(df)
     X = df.drop(columns=[yColumn])
     y = df[yColumn]
