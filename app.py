@@ -6,12 +6,22 @@ app = Flask(__name__)
 
 
 
+
+
 @app.route('/')
 def homepage():
     return 'Projet Famoki'
 
-@app.route('/login')
+@app.route('/api/login')
 def page_de_connexion():
+    
+    # Vérification données envoyées par le front 
+    
+    # Comparaison des identifiants reçus depuis le front avec chaque users enregistrés
+    
+    # Génération du token
+    
+    # retourner un json avec un "{[ Ok : boolean , Message : "message", token : token]}"
     return '/loginRouteVue'
 
 
