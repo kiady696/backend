@@ -131,10 +131,26 @@ def train_model():
         model.fit(X, y)
         y_pred = model.predict(X)
         accuracy = accuracy_score(y, y_pred)
-        print(accuracy)
-
-        
+        print(accuracy) 
         return jsonify(accuracy)
+
+
+@app.route('/')
+def homepage():
+    return 'Projet Famoki'
+
+
+@app.route('/api/login')
+def page_de_connexion():
+    
+    # Vérification données envoyées par le front 
+    
+    # Comparaison des identifiants reçus depuis le front avec chaque users enregistrés
+    
+    # Génération du token
+    
+    # retourner un json avec un "{[ Ok : boolean , Message : "message", token : token]}"
+    return '/loginRouteVue'
 
 
 if __name__ == '__main__':
