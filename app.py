@@ -1,7 +1,7 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 import io
 import csv
-import jsonify
+import pandas as pd
 
 
 devmode = True
@@ -18,6 +18,7 @@ def upload_csv():
     file = request.files.get('file')  # Récupère le fichier
     if file and file.filename.endswith('.csv'):
         # Lire le contenu du fichier CSV
+            
         content = file.stream.read().decode('utf-8')
         csv_reader = csv.reader(io.StringIO(content))
         
@@ -29,7 +30,15 @@ def upload_csv():
             data.append(processed_row)
 
         # Retourner les données traitées
-    return jsonify(data)  # Renvoie les données traitées au frontend
+    data = jsonify(data)
+    return data # Renvoie les données traitées au frontend
+
+def get_target():
+
+    csv = upload_csv()
+
+
+
 
 
     
