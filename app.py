@@ -57,7 +57,7 @@ def train_model():
     yColumn = "variety"
     print(model_choice,idFile,yColumn)
 
-    df = pd.read_csv(f"./backend-1/uploads/{idFile}.csv")
+    df = pd.read_csv(f"./uploads/{idFile}.csv")
     print(df)
     X = df.drop(columns=[yColumn])
     y = df[yColumn]
@@ -77,7 +77,7 @@ def train_model():
         print(accuracy)
 
         
-        return jsonify({"success": True, "accuracy" : {accuracy}})
+        return jsonify(accuracy)
 
 
 if __name__ == '__main__':
