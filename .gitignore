@@ -10,3 +10,6 @@ uploads/*
 
 # exception à la règle (pour permettre le dossier uploads/)
 uploads/.gitkeep
+
+# ignorer les sessions flask
+flask_session/*

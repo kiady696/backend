@@ -8,12 +8,16 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 import uuid
 from sklearn.preprocessing import LabelEncoder
+from dataBase import DataBase
 
 devmode = True
 
 app = Flask(__name__)
 app.secret_key = 'user01'
 app.config['UPLOAD_FOLDER'] = './uploads'
+
+# Instanciation de l'objet dbe issue de la classe DataBase
+db = DataBase(app)
 
 
 # Répertoire où les fichiers seront sauvegardés temporairement
@@ -77,14 +81,14 @@ def upload_csv():
     
 
 
-@app.route('/api/upload', methods=['POST'])
-def upload_csv():
-    file = request.files['file']
-    idFile = uuid()
-    filename = f"./uploads/{idFile}.csv"
-    file.save(filename)
-    columns = pd.read_csv(filename).columns
-    return {"idFile": idFile, "columns": columns}
+# @app.route('/api/upload', methods=['POST'])
+# def upload_csv():
+#     file = request.files['file']
+#     idFile = uuid()
+#     filename = f"./uploads/{idFile}.csv"
+#     file.save(filename)
+#     columns = pd.read_csv(filename).columns
+#     return {"idFile": idFile, "columns": columns}
 
 @app.route('/api/train_model', methods=['POST'])
 def train_model():
