@@ -8,6 +8,12 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 import uuid
 from sklearn.preprocessing import LabelEncoder
+from lime.lime_tabular import LimeTabularExplainer
+import matplotlib.pyplot as plt
+import numpy as np
+from sklearn.model_selection import train_test_split
+import base64
+from io import BytesIO
 
 devmode = True
 
@@ -28,7 +34,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 @app.route('/api/csv', methods=['POST'])
-def upload_csv():
+def upload1_csv():
         file = request.files.get('file')  # Récupère le fichier
 
         if file and file.filename.endswith('.csv'): #Vérification si le fichier est bien un CSV
@@ -44,10 +50,11 @@ def upload_csv():
                 df = pd.read_csv(file_path)
             # Optionnel: tu peux ici faire des opérations sur le DataFrame
                 print(df.head())  # Affiche les 5 premières lignes du DataFrame
-            
+                list_col = list(df.columns)
+                print("Affichage des colonnes : " , list_col)
             # Retourner un message de succès avec un aperçu des données
                 #afficher : nom du fichier, nom des colonnes,  target
-                return jsonify({"filename": name_csv, "data_preview": df.head().to_json()}), 200
+                return jsonify({"filename": name_csv, "data_preview": df.head().to_json(),"colonnes": list_col}), 200
             except Exception as e:
                 return jsonify({"error": f"Error processing CSV: {str(e)}"}), 500
         else:
@@ -88,53 +95,84 @@ def upload_csv():
 
 @app.route('/api/train_model', methods=['POST'])
 def train_model():
-    """"model_choice = request.json['model']
-    idFile = request.json['idFile']
-    yColumn = request.json['yColumn']
-    print(model_choice,idFile,yColumn)
-    
-    df = pd.read_csv(f"./uploads/{idFile}.csv")
-    print(df)
-    X = df.drop(columns=[yColumn])
-    y = df[yColumn]
-    
-    if model_choice == 'random_forest':
-        model = RandomForestClassifier()
-        model.fit(X, y)
-        y_pred = model.predict(X)
-        accuracy = accuracy_score(y, y_pred)
-    elif model_choice == 'xgboost':
-        model = xgb.XGBClassifier()
-        model.fit(X, y)
-        y_pred = model.predict(X)
-        accuracy = accuracy_score(y, y_pred)"""
-    model_choice = "xgboost"  
-    #idFile = "TEST"
-    idFile = request.json['file/name']
-    yColumn = "variety"
-    print(model_choice,idFile,yColumn)
+    # Lecture des paramètres envoyés via la requête JSON
+    model_choice = request.json.get('model', 'xgboost')
+    idFile = request.json.get('idFile', '')
+    yColumn = request.json.get('yColumn', '')
 
+    # Charger le fichier CSV
     df = pd.read_csv(f"./uploads/{idFile}")
-    print(df)
     X = df.drop(columns=[yColumn])
     y = df[yColumn]
-    label_encoder=LabelEncoder()
-    y=label_encoder.fit_transform(y)
 
+    # Encodage des labels
+    label_encoder = LabelEncoder()
+    y = label_encoder.fit_transform(y)
+
+    # Séparation en train et test
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+    # Initialisation du modèle selon le choix
     if model_choice == 'random_forest':
-        model = RandomForestClassifier()
-        model.fit(X, y)
-        y_pred = model.predict(X)
-        accuracy = accuracy_score(y, y_pred)
+        model = RandomForestClassifier(random_state=42)
     elif model_choice == 'xgboost':
-        model = xgb.XGBClassifier()
-        model.fit(X, y)
-        y_pred = model.predict(X)
-        accuracy = accuracy_score(y, y_pred)
-        print(accuracy)
+        model = xgb.XGBClassifier( eval_metric='mlogloss')
+    #use_label_encoder=False,
+    # Liste des nombres d'estimateurs à tester
+    n_estimators_range = range(10, 510, 10)
 
-        
-        return jsonify(accuracy)
+    # Listes pour stocker les résultats
+    train_accuracies = []
+    test_accuracies = []
+
+    # Boucle pour tester différents nombres d'estimateurs
+    for n_estimators in n_estimators_range:
+        model.set_params(n_estimators=n_estimators)
+        model.fit(X_train, y_train)
+
+        # Prédictions et calcul des accuracies
+        y_train_pred = model.predict(X_train)
+        y_test_pred = model.predict(X_test)
+
+        train_accuracy = accuracy_score(y_train, y_train_pred)
+        test_accuracy = accuracy_score(y_test, y_test_pred)
+
+        train_accuracies.append(train_accuracy)
+        test_accuracies.append(test_accuracy)
+
+    # Trouver l'accuracy maximale
+    max_accuracy = max(test_accuracies)
+    best_n_estimators = n_estimators_range[np.argmax(test_accuracies)]
+
+    # Générer un graphique des accuracies
+    fig, ax = plt.subplots()
+    ax.plot(n_estimators_range, train_accuracies, label='Train Accuracy', color='blue')
+    ax.plot(n_estimators_range, test_accuracies, label='Test Accuracy', color='red')
+    ax.set_title('Accuracy vs N Estimators')
+    ax.set_xlabel('Number of Estimators')
+    ax.set_ylabel('Accuracy')
+    ax.legend()
+
+    # Sauvegarder le graphique en base64
+    img = BytesIO()
+    plt.savefig(img, format='png')
+    img.seek(0)
+    img_b64 = base64.b64encode(img.getvalue()).decode('utf-8')
+    plt.close(fig)
+
+    # Préparer la réponse JSON avec le graphique
+    response = {
+        'model_choice': model_choice,
+        'n_estimators_range': list(n_estimators_range),
+        'train_accuracies': train_accuracies,
+        'test_accuracies': test_accuracies,
+        'max_accuracy': max_accuracy,
+        'best_n_estimators': best_n_estimators,
+        'accuracy_plot': img_b64  # Le graphique en base64
+    }
+
+    # Retourner les résultats sous forme de JSON
+    return jsonify(response)
 
 
 if __name__ == '__main__':
