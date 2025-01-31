@@ -28,7 +28,8 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
 @app.route('/api/csv', methods=['POST'])
-def upload_csv():
+
+def upload_csv1():
         file = request.files.get('file')  # Récupère le fichier
 
         if file and file.filename.endswith('.csv'): #Vérification si le fichier est bien un CSV
@@ -42,12 +43,25 @@ def upload_csv():
         # Charger le fichier CSV dans un DataFrame Pandas
             try:
                 df = pd.read_csv(file_path)
-            # Optionnel: tu peux ici faire des opérations sur le DataFrame
-                print(df.head())  # Affiche les 5 premières lignes du DataFrame
+                print(df.head())  #afficher les premieres lignes du df pour vérifier son importation
             
-            # Retourner un message de succès avec un aperçu des données
                 #afficher : nom du fichier, nom des colonnes,  target
-                return jsonify({"filename": name_csv, "data_preview": df.head().to_json()}), 200
+
+
+
+                #recuperation des colonnes dans une liste
+                #list_col=[]
+                #for col in df.columns:
+                #    list_col.append(col)
+                list_col= list(df.columns)
+                # list_col = [c for c in df.columns]
+                print("affichage de la liste des colonnes ==>", list_col) #Vérification de la liste finale
+
+                #retourner : nom du fichier, noms des colonnes et la target
+                return jsonify({"filename": name_csv, "data_preview": df.head().to_json(), "colonnes": list_col}), 200
+            
+            
+
             except Exception as e:
                 return jsonify({"error": f"Error processing CSV: {str(e)}"}), 500
         else:
@@ -56,35 +70,14 @@ def upload_csv():
 
 
         
-         
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
-
-
-@app.route('/api/upload', methods=['POST'])
-def upload_csv():
-    file = request.files['file']
-    idFile = uuid()
-    filename = f"./uploads/{idFile}.csv"
-    file.save(filename)
-    columns = pd.read_csv(filename).columns
-    return {"idFile": idFile, "columns": columns}
+# @app.route('/api/upload', methods=['POST'])
+# def upload_csv():
+#     file = request.files['file']
+#     idFile = uuid()
+#     filename = f"./uploads/{idFile}.csv"
+#     file.save(filename)
+#     columns = pd.read_csv(filename).columns
+#     return {"idFile": idFile, "columns": columns}
 
 @app.route('/api/train_model', methods=['POST'])
 def train_model():
